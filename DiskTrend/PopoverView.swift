@@ -250,13 +250,22 @@ struct TrendView: View {
             }
 
             // Chart with forecast
-            if allChartData.count >= 2 {
+            if historicalData.count >= 2 {
                 Chart {
                     // Historical data - solid line
-                    ForEach(historicalData) { point in
+                    LineMark(
+                        x: .value("Time", historicalData.first!.timestamp),
+                        y: .value("Free", historicalData.first!.freeGB),
+                        series: .value("Series", "history")
+                    )
+                    .foregroundStyle(statusColor)
+                    .lineStyle(StrokeStyle(lineWidth: 2))
+
+                    ForEach(historicalData.dropFirst()) { point in
                         LineMark(
                             x: .value("Time", point.timestamp),
-                            y: .value("Free", point.freeGB)
+                            y: .value("Free", point.freeGB),
+                            series: .value("Series", "history")
                         )
                         .foregroundStyle(statusColor)
                         .lineStyle(StrokeStyle(lineWidth: 2))
@@ -266,28 +275,16 @@ struct TrendView: View {
                     ForEach(forecastData) { point in
                         LineMark(
                             x: .value("Time", point.timestamp),
-                            y: .value("Free", point.freeGB)
+                            y: .value("Free", point.freeGB),
+                            series: .value("Series", "forecast")
                         )
                         .foregroundStyle(forecastColor.opacity(0.7))
                         .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 3]))
                     }
-
-                    // Forecast label
-                    if let firstForecast = forecastData.first {
-                        RuleMark(x: .value("Now", firstForecast.timestamp))
-                            .foregroundStyle(Color.secondary.opacity(0.3))
-                            .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 2]))
-                            .annotation(position: .top, alignment: .leading) {
-                                Text(String(localized: "trend.forecast"))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                    .padding(.leading, 4)
-                            }
-                    }
                 }
                 .chartXAxis {
-                    AxisMarks(values: .automatic(desiredCount: 5)) { value in
-                        AxisValueLabel(format: .dateTime.day().month(.abbreviated))
+                    AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                        AxisValueLabel(format: .dateTime.day())
                             .font(.caption2)
                     }
                 }
@@ -336,8 +333,14 @@ struct TrendView: View {
     private var forecastData: [ChartDataPoint] {
         guard let lastSnapshot = snapshots.last else { return [] }
 
+        // Only show forecast if disk space is decreasing
+        guard trend.bytesPerDay > 0 else { return [] }
+
         let lastFreeGB = Double(lastSnapshot.freeBytes) / 1_000_000_000
         let gbPerDay = Double(trend.bytesPerDay) / 1_000_000_000
+
+        // Calculate days until full (max 30 days to show)
+        let daysUntilFull = min(Int(ceil(lastFreeGB / gbPerDay)), 30)
 
         var forecast: [ChartDataPoint] = []
 
@@ -348,8 +351,8 @@ struct TrendView: View {
             isForecast: true
         ))
 
-        // Add 7 days of forecast
-        for day in 1...7 {
+        // Add forecast points until disk full or 30 days
+        for day in 1...daysUntilFull {
             let forecastDate = Calendar.current.date(byAdding: .day, value: day, to: lastSnapshot.timestamp) ?? lastSnapshot.timestamp
             let forecastGB = max(0, lastFreeGB - (gbPerDay * Double(day)))
 
