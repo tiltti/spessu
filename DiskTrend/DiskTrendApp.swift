@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 @main
 struct DiskTrendApp: App {
@@ -7,16 +8,27 @@ struct DiskTrendApp: App {
 
     init() {
         print("[DiskTrend] Starting...")
+        updateAppearance()
     }
 
-    private var colorScheme: ColorScheme? {
-        AppearanceMode(rawValue: appearanceMode)?.colorScheme
+    private func updateAppearance() {
+        let mode = AppearanceMode(rawValue: appearanceMode) ?? .system
+        switch mode {
+        case .system:
+            NSApp.appearance = nil
+        case .light:
+            NSApp.appearance = NSAppearance(named: .aqua)
+        case .dark:
+            NSApp.appearance = NSAppearance(named: .darkAqua)
+        }
     }
 
     var body: some Scene {
         MenuBarExtra {
             PopoverView(diskMonitor: diskMonitor)
-                .preferredColorScheme(colorScheme)
+                .onChange(of: appearanceMode) { _, _ in
+                    updateAppearance()
+                }
         } label: {
             MenuBarView(diskMonitor: diskMonitor)
         }
@@ -24,7 +36,6 @@ struct DiskTrendApp: App {
 
         Settings {
             SettingsView(diskMonitor: diskMonitor)
-                .preferredColorScheme(colorScheme)
         }
     }
 }
