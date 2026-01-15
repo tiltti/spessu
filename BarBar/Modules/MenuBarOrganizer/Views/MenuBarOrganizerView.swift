@@ -71,21 +71,21 @@ struct MenuBarOrganizerView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "1.circle.fill")
                         .foregroundColor(.blue)
-                    Text("Hold ⌘ and drag ••• to position it")
+                    Text("Hold ⌘ and drag | to position the divider")
                         .font(.caption)
                 }
 
                 HStack(spacing: 8) {
                     Image(systemName: "2.circle.fill")
                         .foregroundColor(.blue)
-                    Text("Click ••• to hide icons to its left")
+                    Text("Click < or | to hide icons left of the divider")
                         .font(.caption)
                 }
 
                 HStack(spacing: 8) {
                     Image(systemName: "3.circle.fill")
                         .foregroundColor(.blue)
-                    Text("Click ‹‹ to show them again")
+                    Text("Click > to show them again")
                         .font(.caption)
                 }
             }
@@ -102,11 +102,15 @@ struct MenuBarOrganizerSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Text("The ••• icon in your menu bar controls which icons are visible.")
+                Text("Two icons appear in your menu bar: | (divider) and < (toggle).")
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                Text("Hold ⌘ and drag it to set the dividing point between visible and hidden icons.")
+                Text("Hold ⌘ and drag the | divider to set where icons are hidden.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Text("Click < or | to hide all icons left of the divider. Click > to show them.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             } header: {
